@@ -3,6 +3,7 @@ from database import SessionLocal
 from sqlalchemy.orm import Session
 import models
 import schemas
+from pydantic import BaseModel
 
 
 router = APIRouter(
@@ -22,12 +23,15 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/")
-def get_product(db: Session = Depends(get_db)):
-    products = db.query(models.Product).all()
+@router.get("/",status_code=200,response_model=list[schemas.ProductResponse])
+def list_products(db: Session = Depends(get_db)):
+    products = db.query(models.Product).order_by(models.Product.id.asc()).all()
     return products
 
-@router.post("/product",status_code=201)
+@router.post("/product", 
+            status_code=201,
+            response_model=schemas.ProductResponse
+        )
 def create_product(
     product: schemas.ProductCreate,
     db=Depends(get_db)
@@ -42,8 +46,8 @@ def create_product(
     db.refresh(db_product)
     return db_product
 
-@router.get("/id/{product_id}",status_code=201)
-def get_product(product_id : int,db: Session = Depends(get_db)):
+@router.get("/id/{product_id}",status_code=200,response_model=schemas.ProductResponse)
+def get_product_by_id(product_id : int,db: Session = Depends(get_db)):
     product = (db.query(models.Product).filter(models.Product.id == product_id).first())
     if product is None:
         raise HTTPException(
@@ -52,27 +56,13 @@ def get_product(product_id : int,db: Session = Depends(get_db)):
         )
     return product
 
-@router.get("/name",status_code=201)
-def get_name(name: str | None = None, db : Session = Depends(get_db)):
-    product = (db.query(models.Product).filter(models.Product.name == name).all())
-    if product is None:
-        raise HTTPException(
-            status_code=404,
-            detail="product not found"
-        )
-    return product
 
-@router.get("/stock",status_code=201)
-def get_name(db : Session = Depends(get_db)):
+@router.get("/stock",status_code=200)
+def get_available_stocks(db : Session = Depends(get_db)):
     product = (db.query(models.Product)
                .filter(models.Product.in_stock == True)
                .filter(models.Product.price < 3000).all()
                )
-    if product is None:
-        raise HTTPException(
-            status_code=404,
-            detail="product not found"
-        )
     return product
 
 @router.get("/p")
@@ -85,17 +75,18 @@ def get_search(name: str, db: Session = Depends(get_db)):
     product = (db.query(models.Product).filter(models.Product.name == name).all())
     return product
 
-@router.post("/categories",status_code=201)
+@router.post("/categories",status_code=201,response_model=schemas.CategoriesResponse)
 def create_category(category: schemas.CategoryCreate,db=Depends(get_db)):
     db_category = models.Category(name=category.name)
+    
 
     db.add(db_category)
     db.commit()
     db.refresh(db_category)
     return db_category
 
-@router.put("/{product_id}")
-def put_products(product_id: int,updated_product: schemas.ProductCreate,db: Session = Depends(get_db)):
+@router.put("/{product_id}",response_model=schemas.ProductResponse)
+def put_products(product_id:int, updated_product:schemas.ProductCreate, db:Session = Depends(get_db)):
     product = (db.query(models.Product).filter(models.Product.id == product_id).first())
     if product is None:
         raise HTTPException(
@@ -112,7 +103,7 @@ def put_products(product_id: int,updated_product: schemas.ProductCreate,db: Sess
     return product
 
 @router.delete("/{product_id}")
-def delete_product(product_id: int,db: Session = Depends(get_db)):
+def delete_product(product_id:int, db:Session = Depends(get_db)):
     product = (db.query(models.Product).filter(models.Product.id == product_id).first())
     if product is None:
         raise HTTPException(

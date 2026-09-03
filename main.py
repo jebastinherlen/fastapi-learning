@@ -4,8 +4,6 @@ from database import engine
 from sqlalchemy import text
 import models
 
-
-
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
