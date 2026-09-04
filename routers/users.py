@@ -3,8 +3,7 @@ from database import SessionLocal
 from sqlalchemy.orm import Session
 import models
 import schemas
-import bcrypt
-from security import hash_password, verify_password
+from security import (hash_password, verify_password, create_access_token, get_current_user)
 
 
 router = APIRouter(
@@ -23,6 +22,10 @@ def get_db():
     finally:
         db.close()
 
+@router.get("/me")
+def get_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
 @router.post("/register",status_code=201,response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate,db=Depends(get_db)):
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
@@ -33,11 +36,8 @@ def create_user(user: schemas.UserCreate,db=Depends(get_db)):
             detail=("Email already registered")
         )
 
-    hashed_password = bcrypt.hashpw(
-        user.password.encode("utf-8"),
-        bcrypt.gensalt()
-    ).decode("utf-8")
-
+    hashed_password = hash_password(user.password)
+    
     new_user = models.User(
         name=user.name,
         email=user.email,
@@ -62,10 +62,7 @@ def update_user(user_id: int,update_user:schemas.UserCreate,db: Session = Depend
             status_code=404,
             detail="User not found"
         )
-    hashed_password = bcrypt.hashpw(
-        update_user.password.encode("utf-8"),
-        bcrypt.gensalt()
-    ).decode("utf-8")
+    hashed_password = hash_password(update_user.password)
 
     user.name = update_user.name
     user.email = update_user.email
@@ -94,5 +91,15 @@ def user_login(user:schemas.UserLogin, db:Session = Depends(get_db)):
             status_code=401,
             detail="Invalid email or password"
         )
+
+    access_token = create_access_token(
+        data={
+            "sub": str(existing_user.id)
+        }
+    )
     
-    return {"message":"Login successfull"}
+    return {
+        "access_token": access_token,
+        "token_type":"bearer",
+        "message":"Login successfull"
+        }
