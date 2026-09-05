@@ -3,7 +3,7 @@ from database import SessionLocal
 from sqlalchemy.orm import Session
 import models
 import schemas
-from security import (hash_password, verify_password, create_access_token, get_current_user)
+from security import (hash_password, verify_password, create_access_token, get_current_user, require_admin)
 
 
 router = APIRouter(

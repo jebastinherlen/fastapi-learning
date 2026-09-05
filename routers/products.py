@@ -3,7 +3,7 @@ from database import SessionLocal
 from sqlalchemy.orm import Session
 import models
 import schemas
-from pydantic import BaseModel
+from security import (require_admin)
 
 
 router = APIRouter(
@@ -86,7 +86,10 @@ def create_category(category: schemas.CategoryCreate,db=Depends(get_db)):
     return db_category
 
 @router.put("/{product_id}",response_model=schemas.ProductResponse)
-def put_products(product_id:int, updated_product:schemas.ProductCreate, db:Session = Depends(get_db)):
+def put_products(product_id:int,
+                updated_product:schemas.ProductCreate,
+                db:Session = Depends(get_db),
+                current_user: models.User = Depends(require_admin)):
     product = (db.query(models.Product).filter(models.Product.id == product_id).first())
     if product is None:
         raise HTTPException(
@@ -103,7 +106,7 @@ def put_products(product_id:int, updated_product:schemas.ProductCreate, db:Sessi
     return product
 
 @router.delete("/{product_id}")
-def delete_product(product_id:int, db:Session = Depends(get_db)):
+def delete_product(product_id:int, db:Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
     product = (db.query(models.Product).filter(models.Product.id == product_id).first())
     if product is None:
         raise HTTPException(
@@ -114,4 +117,4 @@ def delete_product(product_id:int, db:Session = Depends(get_db)):
     db.delete(product)
     db.commit()
 
-    return {"message":"product deleted"}
+    return {"message": f"product{product_id} deleted"}
