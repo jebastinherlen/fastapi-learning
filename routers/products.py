@@ -11,11 +11,6 @@ router = APIRouter(
     tags=["Products"]
 )
 
-def get_products():
-    return {
-        "message":"Products route"
-    }
-
 def get_db():
     db = SessionLocal()
     try:
@@ -29,7 +24,7 @@ def list_products(db: Session = Depends(get_db)):
     return products
 
 @router.post("/product", 
-            status_code=201,
+            status_code=200,
             response_model=schemas.ProductResponse
         )
 def create_product(

@@ -11,9 +11,6 @@ router = APIRouter(
     tags=["Users"]
 )
 
-def get_users():
-    return {"message":"Users route"}
-
 def get_db():
     db = SessionLocal()
     try:
@@ -94,7 +91,7 @@ def user_login(user:schemas.UserLogin, db:Session = Depends(get_db)):
 
     access_token = create_access_token(
         data={
-            "sub": str(existing_user.id)
+            "sub": str(existing_user.user_id)
         }
     )
     

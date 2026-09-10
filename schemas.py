@@ -10,6 +10,10 @@ class UserCreate(BaseModel):
     email: EmailStr
     password:str
 
+class OrderCreate(BaseModel):
+    product_id:int
+    quantity:int
+
 class UserLogin(BaseModel):
     email:EmailStr
     password:str = Field(min_length=8)
@@ -33,6 +37,16 @@ class UserResponse(BaseModel):
     email:EmailStr
 
     model_config = ConfigDict(from_attributes=True)  
+
+class OrderResponse(BaseModel):
+    id:int
+    user_id:int
+    product_id:int
+    quantity:int
+    status:str
+    total_price:float
+
+    model_config = ConfigDict(from_attributes=True)
 
 class CategoriesResponse(BaseModel):
     name: str

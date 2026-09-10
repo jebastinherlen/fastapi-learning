@@ -19,6 +19,17 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user", nullable=False)
 
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer,primary_key=True, index=True)
+    user_id = Column(Integer)
+    product_id = Column(Integer)
+    quantity = Column(Integer)
+    status = Column(String, default="pending")
+    total_price = Column(Float)
+    
+
 class Category(Base):
     __tablename__ = "categories"
 
